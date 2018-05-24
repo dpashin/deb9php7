@@ -46,28 +46,34 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.provision "shell", inline: <<-SHELL
+    # nginx
+    sudo apt-get install -y nginx
+    sudo cp /vagrant_provision/nginx/mysite /etc/nginx/sites-available
+    sudo ln -s /etc/nginx/sites-available/mysite /etc/nginx/sites-enabled/mysite
+    sudo rm /etc/nginx/sites-enabled/default
+    sudo /etc/init.d/nginx restart
+    sudo tail /var/log/nginx/error.log
+
     # postgres
     echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -sc)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
     wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
     apt-get update
     apt-get install postgresql-10 -y
 
+    # php
+    sudo apt-get -y install php-cli php-fpm php-pgsql php-xdebug
+
     # misc
-    sudo apt-get install git mc
+    sudo apt-get -y install git mc
 
     # php 7.2
     sudo apt-get -y install apt-transport-https lsb-release ca-certificates
-    sudo wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
-    echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/php.list
-    sudo apt-get update
-    sudo apt-get -y install php7.2-cli php7.2-fpm php7.2-pgsql php7.2-xdebug
 
-    # nginx
-    sudo apt-get install nginx
-    sudo cp /vagrant_provision/nginx/mysite /etc/nginx/sites-available
-    sudo ln -s /etc/nginx/sites-available/mysite /etc/nginx/sites-enabled/mysite
-    sudo rm /etc/nginx/sites-enabled/default
-    sudo /etc/init.d/nginx restart
-    sudo tail /var/log/nginx/error.log
+    # TODO попробовать полечить https://stackoverflow.com/questions/39437606/curl-35-gnutls-handshake-failed-public-key-signature-verification-has-fail/41318564#41318564
+    # sudo wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
+    # sudo apt-key add /vagrant_provision/php.pgp
+    # echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/php.list
+    # sudo apt-get update
+    # sudo apt-get -y install php7.2-cli php7.2-fpm php7.2-pgsql php7.2-xdebug
   SHELL
 end
